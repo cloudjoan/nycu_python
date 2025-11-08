@@ -1,0 +1,246 @@
+/* static/style.css
+   這個檔案包含了所有 CSS 樣式，已移除 Tailwind CDN
+*/
+
+/* --- 1. 基本樣式 (取代 Tailwind) --- */
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    background-color: #1a1a2e; /* 深藍紫色背景 */
+    color: #e0e0e0; /* 淺灰色文字 */
+    width: 100%;
+    min-height: 100%; /* *** 修正：允許內容超過螢幕高度 *** */
+    overflow-x: hidden; /* *** 修正：只隱藏水平捲軸 *** */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1 {
+    font-size: 2.25rem; /* 36px */
+    font-weight: 700;
+    margin-top: 1.5rem; /* 24px */
+    margin-bottom: 0.5rem; /* 8px */
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    text-align: center; /* 確保文字本身也置中 */
+}
+
+p {
+    color: #a0a0c0; /* 淡紫色輔助文字 */
+    margin-bottom: 1.5rem; /* 24px */
+    text-align: center; /* 確保文字本身也置中 */
+}
+
+/* --- 2. 佈局容器 --- */
+#app-container {
+    width: 100vw;
+    min-height: 100vh; /* *** 修正：改為最小高度 *** */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* *** 修正：水平置中所有子元素 *** */
+}
+
+#spread-area {
+    width: 100%;
+    height: 65vh; /* 改用 vh 確保在不同高度下比例正確 */
+    position: relative; /* 關鍵：讓卡牌定位 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#controls-area {
+    text-align: center;
+    padding: 1rem;
+    height: auto; /* 改為 auto 以容納內容 */
+    width: 100%; /* 確保控制區佔滿寬度 */
+}
+
+#selection-area {
+    width: 100%;
+    max-width: 900px; /* 容納 5 張牌 */
+    margin: 0 auto;
+    height: 25vh; /* 改用 vh */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.25rem; /* 20px 間距 */
+    padding: 0 1rem;
+    box-sizing: border-box; /* 包含 padding */
+    position: relative;
+    transition: padding-top 0.3s ease, height 0.3s ease;
+}
+
+/* --- 3. 按鈕樣式 --- */
+#draw-btn {
+    background-color: #7c3aed; /* 紫色 */
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem; /* 12px 24px */
+    border: none;
+    border-radius: 8px; /* 圓角 */
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+#draw-btn:hover {
+    background-color: #8b5cf6; /* 亮一點的紫色 */
+    transform: translateY(-2px);
+}
+
+#draw-btn:active {
+    transform: translateY(0);
+}
+
+/* --- 4. 卡槽 (下方 5 張牌) --- */
+.slot {
+    width: 110px;
+    height: 180px;
+    border: 2px dashed #4a4a6e; /* 虛線框 */
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #6a6a8e;
+    font-size: 0.875rem;
+    transition: transform 0.3s ease-out; /* 高低變換動畫 */
+}
+
+/* --- 5. 卡牌核心樣式 (包含翻牌) --- */
+
+/* 卡牌容器 (上方攤開的牌) */
+.card {
+    width: 100px;
+    height: 170px;
+    position: absolute; /* 攤牌時使用絕對定位 */
+    cursor: pointer;
+    border-radius: 8px;
+    
+    /* *** 修正點 1：加入 'left' 的動畫時間 *** */
+    transition: opacity 0.4s ease, 
+                transform 0.7s ease-out, 
+                left 0.7s ease-in-out; /* <-- 新增 'left' 動畫 */
+                
+    transform-origin: bottom center; /* 攤牌時的旋轉基點 */
+    
+    /* *** 修正點 2：加入 'left' 的初始位置 *** */
+    left: 10%; /* <-- 新增：卡牌的初始 X 軸位置 */
+    
+    /* *** 關鍵：設定 3D 視角 *** */
+    perspective: 1000px;
+}
+
+/* 卡牌內層 (負責 3D 旋轉) */
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    
+    /* *** 關鍵：翻牌動畫時間 *** */
+    transition: transform 0.7s; 
+    transform-style: preserve-3d;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+}
+
+/* *** 關鍵：JS 加入 .is-flipped 後，執行這個旋轉 *** */
+.card.is-flipped .card-inner {
+    transform: rotateY(180deg);
+}
+
+
+/* 卡牌正面 和 卡牌背面 */
+.card-front,
+.card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    
+    /* *** 關鍵：隱藏元素的背面 *** */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    
+    border-radius: 8px;
+    overflow: hidden; /* 確保圖片不超出圓角 */
+}
+
+/* 卡牌背面 (使用 KatyCard3.png) */
+.card-back {
+    background-image: url('KatyCard3.png');
+    background-size: cover;
+    background-position: center;
+}
+
+/* *** 關鍵：卡牌正面 (初始狀態是 Y 軸旋轉 180 度，即背面) *** */
+.card-front {
+    transform: rotateY(180deg);
+    background-color: #2a2a3a; /* 正面背景色 */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* 文字放底部 */
+    align-items: center;
+    box-sizing: border-box;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+/* 卡牌正面的內容 */
+.card-front-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #fff;
+    margin-top: 4px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+    /* 確保文字在圖片上方 */
+    position: absolute;
+    bottom: 8px;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+    padding-top: 10px;
+    padding-bottom: 5px;
+}
+
+/* 卡牌正面的圖片 (佔位符) */
+.card-front img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px; /* 圖片也加圓角 */
+}
+
+
+/* --- 6. 卡牌狀態 --- */
+
+/* 攤牌時，被選中的牌 (淡出) */
+.card.is-selected {
+    opacity: 0.2;
+    transform: translateY(20px) scale(0.9); /* 往下沉 */
+    pointer-events: none; /* 不可再點 */
+}
+
+/* --- 7. 飛行動畫卡牌 --- */
+.flying-card {
+    width: 100px;
+    height: 170px;
+    position: fixed; /* 固定在畫面上 */
+    z-index: 1000; /* 飛在最上層 */
+    border-radius: 8px;
+    
+    /* *** 關鍵：動畫時間 1.2 秒 *** */
+    transition: left 2s ease-in-out, 
+                top 2s ease-in-out, 
+                transform 2s ease-in-out;
+                
+    transform-origin: bottom center; /* 旋轉基點 (修正點) */
+    pointer-events: none; /* 穿透點擊 */
+}
+
+/* 飛行卡內層 (確保陰影和圓角) */
+.flying-card .card-inner {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+

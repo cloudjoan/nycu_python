@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>塔羅牌線上抽牌</title>
+    
+    <!-- 載入我們自己的靜態 CSS 檔案 -->
+    <!-- 這裡不再使用 Tailwind CDN -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <!-- 標題 -->
+    <h1>塔羅牌占卜 (Python Flask)</h1>
+
+    <!-- 攤牌區域 -->
+    <div id="spread-area">
+        <!-- 卡牌將由 JavaScript 動態生成於此 -->
+    </div>
+
+    <!-- 按鈕容器 -->
+    <div id="button-container" style="text-align: center;">
+        <button id="draw-btn">
+            洗牌並攤牌 (請選 5 張)
+        </button>
+    </div>
+
+    <!-- 選擇區域 (下方) -->
+    <div id="selection-area">
+        <!-- 卡槽將由 JavaScript 動態生成於此 -->
+    </div>
+
+    <!-- 載入外部 JavaScript 檔案 -->
+    <script src="/static/script.js"></script>
+</body>
+</html>
+

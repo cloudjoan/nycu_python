@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-m">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>塔羅牌線上抽牌</title>
+    <!-- 載入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自訂字體 */
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #1a1a2e; /* 深藍紫色背景 */
+            color: #e0e0e0;
+            overflow: hidden; /* 隱藏滾動條 */
+        }
+
+        /* 卡牌的基本樣式 */
+        .card, .slot {
+            width: 100px;
+            height: 170px;
+            border-radius: 8px;
+            background-size: cover;
+            background-position: center;
+            perspective: 1000px; /* 3D 翻轉效果的視角 */
+            cursor: pointer;
+        }
+
+        /* 卡牌翻轉的內部容器 */
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+        }
+
+        /* 卡牌的正面與背面 */
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden; /* Safari */
+            backface-visibility: hidden;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* 卡牌背面：使用漸層或圖片 */
+        .card-back {
+            /* background-image: linear-gradient(135deg, #4a0e97, #8e2de2); */ /* 移除漸層 */
+            background-image: url('KatyCard3.png'); /* *** 修改點：使用您上傳的圖片 *** */
+            background-size: cover; /* 確保圖片填滿 */
+            background-position: center; /* 圖片置中 */
+            border: 2px solid #c0c0c0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 卡牌背面圖案 (簡易太陽) */
+        .card-back::before {
+            /* content: '☀️'; */ /* *** 修改點：移除原本的 emoji *** */
+            content: ''; /* 將內容清空 */
+            font-size: 40px;
+            opacity: 0.8;
+            text-shadow: 0 0 10px #ffd700;
+        }
+
+        /* 卡牌正面：顯示卡牌內容 */
+        .card-front {
+            background-color: #f0f0f0;
+            color: #1a1a2e;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            text-align: center;
+        }
+        
+        .card-front img {
+            width: 80%;
+            height: 60%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        
+        .card-front-name {
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        /* 翻轉卡牌的 class */
+        .is-flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        /* 攤牌區域的卡牌 (絕對定位) */
+        #spread-area .card {
+            position: absolute;
+            bottom: 0;
+            left: 10%; /* 修改點：初始位置在左側 */
+            transform-origin: bottom center;
+            /* 修改點：加長動畫時間，並加入 left 屬性的過渡 */
+            transition: all 0.8s cubic-bezier(0.25, 0.8, 0.25, 1), left 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transform: translateX(-50%); /* 初始集中 */
+        }
+
+        /* 已被選中的卡牌 (在攤牌區淡出) */
+        .is-selected {
+            opacity: 0.2;
+            transform: translateY(20px) scale(0.9);
+            pointer-events: none; /* 淡出後不可再點擊 */
+        }
+
+        /* 下方選擇區的卡槽 */
+        .slot {
+            width: 110px; /* 稍微縮小卡槽以容納5張 */
+            height: 190px;
+            border: 2px dashed #8e2de2;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8e2de2;
+            font-weight: 600;
+            font-size: 14px; /* 調整字體大小 */
+        }
+        
+        /* 卡槽中的卡牌 (未翻轉時是隱藏的) */
+        .slot .card-inner {
+            transform: rotateY(0deg);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center h-screen p-4">
+
+    <h1 class="text-3xl font-bold text-center text-white mb-8 shadow-lg">
+        塔羅牌占卜
+    </h1>
+
+    <!-- 攤牌區域 -->
+    <div id="spread-area" class="relative w-full h-3/5 flex-grow">
+        <!-- 卡牌將由 JavaScript 動態生成於此 -->
+    </div>
+
+    <!-- 按鈕 -->
+    <div class="my-6">
+        <button id="draw-btn" class="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
+            洗牌並攤牌 (請選 5 張)
+        </button>
+    </div>
+
+    <!-- 選擇區域 (下方) -->
+    <div id="selection-area" class="w-full max-w-2xl flex justify-around items-center h-1/4">
+        <!-- 卡槽將由 JavaScript 動態生成於此 -->
+    </div>
+
+    <script>
+        // 為了演示，我們只使用 22 張大阿爾克那 (Major Arcana)
+        // 在實際應用中，您會從後端獲取這些資料
+        
+        /**
+         * 產生一副完整的 78 張塔羅牌
+         */
+        function createFullDeck() {
+            const deck = [];
+            const suits = ['Wands', 'Cups', 'Swords', 'Pentacles'];
+            const ranks = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Page', 'Knight', 'Queen', 'King'];
+            const majorArcanaNames = [
+                'The Fool', 'The Magician', 'The High Priestess', 'The Empress', 'The Emperor',
+                'The Hierophant', 'The Lovers', 'The Chariot', 'Strength', 'The Hermit',
+                'Wheel of Fortune', 'Justice', 'The Hanged Man', 'Death', 'Temperance',
+                'The Devil', 'The Tower', 'The Star', 'The Moon', 'The Sun', 'Judgement', 'The World'
+            ];
+            const majorArcanaNamesZh = [
+                '愚者', '魔術師', '女祭司', '皇后', '皇帝', '教皇', '戀人', '戰車', '力量', '隱士',
+                '命運之輪', '正義', '吊人', '死神', '節制', '惡魔', '高塔', '星星', '月亮', '太陽', '審判', '世界'
+            ];
+            
+            let id = 0;
+
+            // 加入大阿爾克那
+            for (let i = 0; i < majorArcanaNames.length; i++) {
+                deck.push({ id: id, name: majorArcanaNamesZh[i], en: majorArcanaNames[i], type: 'major' });
+                id++;
+            }
+
+            // 加入小阿爾克那
+            for (const suit of suits) {
+                const suitZh = suit === 'Wands' ? '權杖' : suit === 'Cups' ? '聖杯' : suit ==='Swords' ? '寶劍' : '錢幣';
+                
+                for (let i = 0; i < ranks.length; i++) {
+                    const rank = ranks[i];
+                    let rankZh = rank;
+                    // 簡易中文翻譯
+                    if (i === 0) rankZh = 'A';
+                    else if (i === 10) rankZh = '侍者';
+                    else if (i === 11) rankZh = '騎士';
+                    else if (i === 12) rankZh = '皇后';
+                    else if (i === 13) rankZh = '國王';
+
+                    deck.push({ id: id, name: `${suitZh} ${rankZh}`, en: `${rank} of ${suit}`, type: 'minor' });
+                    id++;
+                }
+            }
+            
+            return deck; // 總共 22 + (4 * 14) = 78 張牌
+        }
+
+        const fullDeck = createFullDeck(); // 建立完整的 78 張牌組
+
+        const spreadArea = document.getElementById('spread-area');
+        const selectionArea = document.getElementById('selection-area');
+        const drawButton = document.getElementById('draw-btn');
+
+        let selectedCardsData = [];
+        const maxSelection = 5; // *** 修改點：改為 5 張 ***
+
+        drawButton.addEventListener('click', initializeDeck);
+
+        function initializeDeck() {
+            // 1. 清空區域
+            spreadArea.innerHTML = '';
+            selectionArea.innerHTML = '';
+            selectedCardsData = [];
+
+            // 2. 隨機洗牌 (Fisher-Yates 演算法)
+            let shuffledDeck = [...fullDeck]; // *** 修改點：使用 78 張牌組 ***
+            for (let i = shuffledDeck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledDeck[i], shuffledDeck[j]] = [shuffledDeck[j], shuffledDeck[i]];
+            }
+
+            // 3. 建立下方的選擇卡槽
+            for (let i = 0; i < maxSelection; i++) {
+                const slot = document.createElement('div');
+                slot.classList.add('slot');
+                slot.dataset.slotIndex = i;
+                slot.innerText = `第 ${i + 1} 張`;
+                selectionArea.appendChild(slot);
+            }
+
+            // 4. 建立並攤開卡牌 (特效)
+            const totalCards = shuffledDeck.length; // *** 修改點：現在是 78 ***
+            const arcWidth = 170; // *** 修改點：改回 170 度以形成寬拱形 ***
+            const angleStep = arcWidth / (totalCards - 1);
+            
+            shuffledDeck.forEach((cardData, i) => {
+                const cardEl = document.createElement('div');
+                cardEl.classList.add('card');
+                cardEl.dataset.cardId = cardData.id; // 儲存卡牌的真實 ID
+                
+                // 卡牌的 HTML 結構 (背面)
+                cardEl.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-back"></div>
+                        <!-- 正面先保持空白，選中時再填入 -->
+                        <div class="card-front"></div>
+                    </div>
+                `;
+
+                // 計算攤牌特效的位置
+                // 這是特效的關鍵：使用 transform 來散開卡牌
+                setTimeout(() => {
+                    // *** 修改點：改回中心對稱的角度 ***
+                    const angle = (i - (totalCards - 1) / 2) * angleStep; 
+                    // *** 修改點：加入 translateY 來做出影片中的拱高 ***
+                    // Math.abs(angle) * 2.5 是一個比例，角度越大 (越往兩側)，Y 位移越多
+                    const translateY = Math.abs(angle) * 2.5;
+                    
+                    // *** 核心修改點 ***
+                    // 1. 動畫地將卡牌的 left 移到 50% (中央)
+                    cardEl.style.left = '50%';
+                    // 2. 動畫地旋轉並上移
+                    cardEl.style.transform = `translateX(-50%) rotate(${angle}deg) translateY(-${translateY}px)`;
+                }, i * 20); // *** 修改點：稍微減慢攤牌速度 (20ms) 讓動畫更流暢 ***
+
+                // 5. 綁定點擊事件
+                cardEl.addEventListener('click', handleCardClick);
+                
+                spreadArea.appendChild(cardEl);
+            });
+        }
+
+        function handleCardClick(event) {
+            // 檢查是否已選滿
+            if (selectedCardsData.length >= maxSelection) {
+                return;
+            }
+
+            const clickedCardEl = event.currentTarget;
+
+            // 防止重複點擊同一張牌
+            if (clickedCardEl.classList.contains('is-selected')) {
+                return;
+            }
+
+            // 1. 將攤牌區的卡片標記為「已選」 (觸發淡出)
+            clickedCardEl.classList.add('is-selected');
+
+            // 2. 獲取卡牌資料
+            const cardId = parseInt(clickedCardEl.dataset.cardId);
+            const cardData = fullDeck.find(c => c.id === cardId); // *** 修改點：從 78 張牌組中尋找 ***
+            const selectionIndex = selectedCardsData.length;
+            selectedCardsData.push(cardData);
+
+            // 3. 找到對應的下方卡槽
+            const targetSlot = document.querySelector(`.slot[data-slot-index="${selectionIndex}"]`);
+            if (!targetSlot) return;
+
+            // 4. 這是選牌特效的核心：
+            // 我們在「卡槽」中建立一張新卡，並立即觸發它的翻轉
+            
+            // 使用 placehold.co 作為範例圖片
+            const imgUrl = `https://placehold.co/100x100/e0e0e0/1a1a2e?text=${cardData.en}`;
+            
+            // *** 修改點：重構此處邏輯以支援二次翻牌 ***
+            
+            // 建立卡牌元素
+            const cardInSlot = document.createElement('div');
+            cardInSlot.classList.add('card');
+            cardInSlot.style.width = '100%';
+            cardInSlot.style.height = '100%';
+            cardInSlot.style.cursor = 'pointer'; // 設定游標為可點擊
+
+            cardInSlot.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-back"></div>
+                    <div class="card-front">
+                        <img src="${imgUrl}" alt="${cardData.name}">
+                        <div class="card-front-name">${cardData.name}</div>
+                    </div>
+                </div>
+            `;
+            
+            targetSlot.innerHTML = ''; // 清空卡槽中的 "第 X 張" 文字
+            targetSlot.appendChild(cardInSlot); // 將新卡牌放入卡槽
+            targetSlot.style.border = 'none'; // 移除虛線框
+            targetSlot.style.padding = '0'; // 移除內邊距
+
+            // 5. 觸發翻轉動畫
+            // 需要一個微小的延遲，確保 HTML 元素已渲染
+            setTimeout(() => {
+                cardInSlot.classList.add('is-flipped'); // 翻到正面
+
+                // 6. *** 新增功能：綁定二次翻牌事件 ***
+                cardInSlot.addEventListener('click', () => {
+                    cardInSlot.classList.toggle('is-flipped'); // 切換 'is-flipped' class
+                });
+            }, 50); // 50ms 延遲
+        }
+
+        // 頁面載入時自動攤牌一次
+        initializeDeck();
+
+    </script>
+</body>
+</html>
+
+
+
+
+
