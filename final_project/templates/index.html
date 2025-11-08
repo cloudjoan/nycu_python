@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>塔羅牌線上抽牌</title>
-    
-    <!-- 載入我們自己的靜態 CSS 檔案 -->
-    <!-- 這裡不再使用 Tailwind CDN -->
     <link rel="stylesheet" href="/static/style.css">
+    <!--加入bootstrap-->
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> -->
 </head>
 <body>
 
     <!-- 標題 -->
-    <h1>塔羅牌占卜 (Python Flask)</h1>
+    <h1>塔羅牌占卜</h1>
 
     <!-- 攤牌區域 -->
     <div id="spread-area">
@@ -31,8 +30,56 @@
         <!-- 卡槽將由 JavaScript 動態生成於此 -->
     </div>
 
+    <!--加入'預測末來'的按鈕, 按下後於畫面中間彈出video-container的div-->
+    <div id="button-container" style="text-align: center; margin-top: 20px;">
+        <button id="predict-btn" onclick="showVideoContainer()" class="btn">
+            預測未來
+        </button>
+    </div>
+    
+
+    <!--隨機播放 static底下，magic_1.mp4~magic_6.mp4的影片-->
+    <div id="video-container" style="display:none">
+        <video id="magic-video" autoplay muted loop style="width: 100%; max-width: 600px; display: block; margin: 20px auto;">
+            <source src="" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <script>
+            const video = document.getElementById('magic-video');
+            const videoSources = [
+                '/static/magic_1.mp4',
+                '/static/magic_2.mp4',
+                '/static/magic_3.mp4',
+                '/static/magic_4.mp4',
+                '/static/magic_5.mp4',
+                '/static/magic_6.mp4'
+            ];
+            const randomVideo = videoSources[Math.floor(Math.random() * videoSources.length)];
+            video.querySelector('source').src = randomVideo;
+            video.load();
+            video.play();
+            //自動連續播放影片
+            video.onended = function() {
+                this.play();
+            };
+            
+            video.playbackRate = 0.75;
+
+        </script>
+    </div>
+    
+
     <!-- 載入外部 JavaScript 檔案 -->
     <script src="/static/script.js"></script>
+    <!--加入jquery-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+     <!--加入bootstrap-->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> -->
+    <script>
+        function showVideoContainer() {
+            $('#video-container').show();
+        }
+    </script>
 </body>
 </html>
 

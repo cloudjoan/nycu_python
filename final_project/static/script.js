@@ -211,9 +211,9 @@ function handleCardClick(event) {
         
         // *** 關鍵：自動翻牌 ***
         // 稍微延遲 (50ms) 後，加入 .is-flipped 觸發 CSS 翻牌動畫
-        setTimeout(() => { 
-             cardInSlot.classList.add('is-flipped'); // 翻牌
-        }, 50);
+        // setTimeout(() => { 
+        //      cardInSlot.classList.add('is-flipped'); // 翻牌
+        // }, 50);
        
         // 綁定翻轉事件 (讓卡槽中的牌可以來回翻)
         cardInSlot.addEventListener('click', () => {

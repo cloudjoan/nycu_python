@@ -16,6 +16,21 @@ html, body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+.btn{
+    
+    background-color: #7c3aed; /* 紫色 */
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem; /* 12px 24px */
+    border: none;
+    border-radius: 8px; /* 圓角 */
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    
+}
+
 h1 {
     font-size: 2.25rem; /* 36px */
     font-weight: 700;
@@ -244,3 +259,10 @@ p {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
+/* *** 新增：Hover 效果 *** */
+/* 只有在 #spread-area (攤牌區) 且 未被選中 (.not(.is-selected)) 的卡牌 */
+/* 滑鼠移上去時，才觸發 .card-inner 的動畫 */
+#spread-area .card:not(.is-selected):hover .card-inner {
+    transform: translateY(-40px) scale(1.03); /* 往上 20px, 放大 3% */
+    z-index: 10; /* 移到最上層，避免被其他牌遮住 */
+}
